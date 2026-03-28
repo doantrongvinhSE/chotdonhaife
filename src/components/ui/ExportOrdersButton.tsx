@@ -29,6 +29,7 @@ export function ExportOrdersButton({ orders, className = '' }: ExportOrdersButto
       'Địa chỉ': order.address,
       'Ghi chú': order.note || '',
       'Ngày tạo': formatVNDate(order.createdAt),
+      'Tổng tiền': order.total_price,
     }));
 
     const ws = XLSX.utils.json_to_sheet(excelData);
