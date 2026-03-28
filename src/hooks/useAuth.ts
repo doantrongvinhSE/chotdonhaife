@@ -20,7 +20,7 @@ const useAuth = () => {
 
   // Demo users for testing
   const demoUsers = [
-    { email: 'Hanghai9294@gmail.com', password: 'Zxcv1234!@', name: 'Doan Vinh' },
+    { email: 'Hanghai9294@gmail.com', password: 'Zxcv1234!@', name: 'ADMIN Hải' },
   ];
 
   useEffect(() => {
