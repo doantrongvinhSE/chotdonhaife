@@ -75,7 +75,7 @@ const CommentsTable: React.FC<CommentsTableProps> = ({
     return phones.length > 0 ? phones[0] : null;
   };
 
-  const syncPhone = async (phone: string) => {
+  const syncPhone = async (phone: string, commentId: string) => {
     // Lấy người gọi từ localStorage
     const selectedCallerKey = localStorage.getItem('selectedCaller');
     if (!selectedCallerKey) {
@@ -89,12 +89,15 @@ const CommentsTable: React.FC<CommentsTableProps> = ({
     const DEFAULT_CALLERS = ['Hải', 'Hằng', 'Hoa', 'Hương', 'Hà', 'Linh', 'Thu', 'Liên'];
     const callerName = DEFAULT_CALLERS.find(caller => removeVietnameseAccents(caller) === selectedCallerKey) || selectedCallerKey;
 
+    await onStatusChange(commentId, 'isCalling');
+
     // Lấy số điện thoại đầu tiên
     const firstPhone = getFirstPhone(phone);
     if (!firstPhone) {
       if (onShowToast) {
         onShowToast('Không tìm thấy số điện thoại', 'warning');
       }
+      await onStatusChange(commentId, 'normal');
       return;
     }
 
@@ -333,7 +336,7 @@ const CommentsTable: React.FC<CommentsTableProps> = ({
                             {comment.phone}
                           </button>
                           <button
-                            onClick={() => syncPhone(comment.phone!)}
+                            onClick={() => syncPhone(comment.phone!, comment.id)}
                             disabled={syncingPhone === getFirstPhone(comment.phone)}
                             className="p-1 hover:bg-slate-100 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Đồng bộ số điện thoại"
