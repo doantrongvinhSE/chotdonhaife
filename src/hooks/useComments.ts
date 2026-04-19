@@ -61,6 +61,11 @@ export function useComments(showToastMessage?: (message: string, type?: ToastTyp
   const itemsPerPageRef = useRef<number>(itemsPerPage);
   const notificationsEnabledRef = useRef(notificationsEnabled);
   const showToastMessageRef = useRef(showToastMessage);
+  const phoneFilterRef = useRef(phoneFilter);
+
+  useEffect(() => {
+    phoneFilterRef.current = phoneFilter;
+  }, [phoneFilter]);
 
   useEffect(() => {
     showToastMessageRef.current = showToastMessage;
@@ -78,7 +83,12 @@ export function useComments(showToastMessage?: (message: string, type?: ToastTyp
     initAudio();
   }, []);
 
-  const fetchComments = useCallback(async (silent = false, page = currentPage) => {
+  const fetchComments = useCallback(async (
+    silent = false,
+    page = currentPage,
+    overridePhoneFilter?: boolean,
+    overrideDateFilter?: { startDate: string; endDate: string } | null
+  ) => {
     try {
       if (!silent) setLoading(true);
 
@@ -90,12 +100,14 @@ export function useComments(showToastMessage?: (message: string, type?: ToastTyp
       });
 
       // Thêm filter parameters nếu có
-      if (dateFilter) {
-        params.append('startDate', dateFilter.startDate);
-        params.append('endDate', dateFilter.endDate);
+      const activeDateFilter = overrideDateFilter !== undefined ? overrideDateFilter : dateFilter;
+      if (activeDateFilter) {
+        params.append('startDate', activeDateFilter.startDate);
+        params.append('endDate', activeDateFilter.endDate);
       }
 
-      if (phoneFilter) {
+      const activePhoneFilter = overridePhoneFilter !== undefined ? overridePhoneFilter : phoneFilter;
+      if (activePhoneFilter) {
         params.append('phone', 'true');
       }
 
@@ -179,7 +191,15 @@ export function useComments(showToastMessage?: (message: string, type?: ToastTyp
       });
 
       socket.on("new_comment", (c: Comment) => {
-        // 🔊 Play sound nếu đang bật thông báo
+        // Cập nhật count hôm nay (vẫn tính tổng số comment dù có bị filter hay không)
+        fetchTodayCount();
+
+        // Bỏ qua comment nếu filter "chỉ hiện số điện thoại" đang bật mà comment lại không có số
+        if (phoneFilterRef.current && (!c.phone || c.phone.trim() === "")) {
+          return;
+        }
+
+        // 🔊 Phát âm thanh nếu đang bật thông báo (những comment bị filter không số đã bị return ở trên)
         if (notificationsEnabledRef.current) {
           playSoundProMax();
         }
@@ -207,9 +227,6 @@ export function useComments(showToastMessage?: (message: string, type?: ToastTyp
             return newComments.slice(0, itemsPerPageRef.current);
           });
         }
-
-        // Cập nhật count hôm nay
-        fetchTodayCount();
       });
 
       socket.on("update_comment", ({ id, status }: { id: string; status: CommentStatus }) => {
@@ -338,29 +355,33 @@ export function useComments(showToastMessage?: (message: string, type?: ToastTyp
     setDateFilter({ startDate, endDate });
     setCurrentPage(1); // Reset về trang 1 khi filter
     currentPageRef.current = 1; // Cập nhật ref
-    fetchComments(false, 1); // Gọi API với filter mới
+    fetchComments(false, 1, undefined, { startDate, endDate }); // Gọi API với filter mới
   };
 
   const clearDateFilter = () => {
     setDateFilter(null);
     setCurrentPage(1); // Reset về trang 1 khi clear filter
     currentPageRef.current = 1; // Cập nhật ref
-    fetchComments(false, 1); // Gọi API không có filter
+    fetchComments(false, 1, undefined, null); // Gọi API không có filter
   };
 
   const togglePhoneFilter = () => {
-    const newValue = !phoneFilter;
-    setPhoneFilter(newValue);
-    localStorage.setItem('comments-phone-filter', JSON.stringify(newValue));
-    setCurrentPage(1); // Reset về trang 1 khi toggle filter
-    currentPageRef.current = 1; // Cập nhật ref
-    fetchComments(false, 1); // Gọi API với filter mới
+    setPhoneFilter(prev => {
+      const newValue = !prev;
+      localStorage.setItem('comments-phone-filter', JSON.stringify(newValue));
+      setCurrentPage(1); // Reset về trang 1 khi toggle filter
+      currentPageRef.current = 1; // Cập nhật ref
+      fetchComments(false, 1, newValue); // Gọi API với filter mới
+      return newValue;
+    });
   };
 
   const toggleNotifications = () => {
-    const newValue = !notificationsEnabled;
-    setNotificationsEnabled(newValue);
-    localStorage.setItem('comments-notifications', JSON.stringify(newValue));
+    setNotificationsEnabled(prev => {
+      const newValue = !prev;
+      localStorage.setItem('comments-notifications', JSON.stringify(newValue));
+      return newValue;
+    });
   };
 
   // Play notification sound
