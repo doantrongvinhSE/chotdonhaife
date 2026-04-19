@@ -224,9 +224,16 @@ export function useComments(showToastMessage?: (message: string, type?: ToastTyp
               'isCalling': 'Đang gọi điện',
             }[status];
 
+            const toastType = {
+              'normal': 'info',
+              'success': 'success',
+              'fail': 'error',
+              'isCalling': 'warning',
+            }[status] as ToastType;
+
             // Hiển thị thông báo với tên khách hàng để dễ nhận biết
             const name = commentExists.fb_name || 'Khách hàng';
-            showToastMessageRef.current(`Bình luận của ${name} đã đổi thành: ${statusText}`, 'success');
+            showToastMessageRef.current(`Bình luận của ${name} đã cập nhật trạng thái: ${statusText}`, toastType);
           }
 
           return prev.map(comment =>
@@ -286,7 +293,15 @@ export function useComments(showToastMessage?: (message: string, type?: ToastTyp
             'fail': 'Chốt thất bại',
             'isCalling': 'Đang gọi điện',
           }[newStatus];
-          showToastMessage(`Đã cập nhật trạng thái thành: ${statusText}`, 'success');
+
+          const toastType = {
+            'normal': 'info',
+            'success': 'success',
+            'fail': 'error',
+            'isCalling': 'warning',
+          }[newStatus] as ToastType;
+
+          showToastMessage(`Đã cập nhật trạng thái thành: ${statusText}`, toastType);
         }
       } else {
         throw new Error(result.message || 'Cập nhật trạng thái thất bại');
