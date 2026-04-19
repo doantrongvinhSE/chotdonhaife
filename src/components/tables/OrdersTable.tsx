@@ -223,7 +223,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                 {/* Nhân viên chốt đơn */}
                 <td className="px-4 py-4">
                   <span className="text-sm font-semibold text-slate-600">
-                    {"Hoa"}
+                    {"ADMIN"}
                   </span>
                 </td>
 
