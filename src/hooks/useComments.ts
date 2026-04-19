@@ -2,6 +2,37 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Comment, CommentStatus } from '../types/posts';
 import { API_ENDPOINTS } from '../config/api';
 import { ToastType } from '../components/ui/Toast';
+import { io } from 'socket.io-client';
+
+// ===== 🔊 SOUND PRO MAX =====
+let audio: HTMLAudioElement | null = null;
+let audioUnlocked = false;
+
+const initAudio = () => {
+  if (!audio) {
+    audio = new Audio('/sound/msg.wav');
+    audio.preload = 'auto';
+
+    const unlockAudio = () => {
+      if (!audio) return;
+      audio.play().then(() => {
+        audio!.pause();
+        audio!.currentTime = 0;
+        audioUnlocked = true;
+      }).catch(() => { });
+    };
+
+    document.body.addEventListener("click", unlockAudio, { once: true });
+  }
+};
+
+const playSoundProMax = () => {
+  if (!audioUnlocked || !audio) return;
+  const clone = audio.cloneNode() as HTMLAudioElement;
+  clone.volume = 1;
+  clone.play().catch(() => { });
+};
+
 
 export function useComments(showToastMessage?: (message: string, type?: ToastType) => void) {
   const [comments, setComments] = useState<Comment[]>([]);
@@ -24,53 +55,73 @@ export function useComments(showToastMessage?: (message: string, type?: ToastTyp
   });
   const [previousCommentCount, setPreviousCommentCount] = useState<number>(0);
   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
+  const [highlightedIds, setHighlightedIds] = useState<Set<string>>(new Set());
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const currentPageRef = useRef<number>(currentPage);
+  const itemsPerPageRef = useRef<number>(itemsPerPage);
+  const notificationsEnabledRef = useRef(notificationsEnabled);
+  const showToastMessageRef = useRef(showToastMessage);
+
+  useEffect(() => {
+    showToastMessageRef.current = showToastMessage;
+  }, [showToastMessage]);
+
+  useEffect(() => {
+    itemsPerPageRef.current = itemsPerPage;
+  }, [itemsPerPage]);
+
+  useEffect(() => {
+    notificationsEnabledRef.current = notificationsEnabled;
+  }, [notificationsEnabled]);
+
+  useEffect(() => {
+    initAudio();
+  }, []);
 
   const fetchComments = useCallback(async (silent = false, page = currentPage) => {
     try {
       if (!silent) setLoading(true);
-      
+
       // Tạo query parameters
       const params = new URLSearchParams({
         sort: 'timestamp',
         page: page.toString(),
         limit: itemsPerPage.toString()
       });
-      
+
       // Thêm filter parameters nếu có
       if (dateFilter) {
         params.append('startDate', dateFilter.startDate);
         params.append('endDate', dateFilter.endDate);
       }
-      
+
       if (phoneFilter) {
         params.append('phone', 'true');
       }
-      
+
       const response = await fetch(`${API_ENDPOINTS.COMMENTS}?${params.toString()}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const result = await response.json();
-      
+
       if (result.success && result.data) {
         // API trả về dữ liệu đã được phân trang
         setComments(result.data); // result.data là array comments
         setTotalItems(result.pagination?.totalItems || result.data.length);
         const apiItemsPerPage = result.pagination?.itemsPerPage || itemsPerPage;
         setTotalPages(result.pagination?.totalPages || Math.ceil((result.pagination?.totalItems || result.data.length) / apiItemsPerPage));
-        
+
         // Cập nhật itemsPerPage từ API response
         if (result.pagination?.itemsPerPage) {
           setItemsPerPage(result.pagination.itemsPerPage);
         }
-        
+
         // Chỉ reset page khi không phải silent refresh (polling)
         if (!silent) {
           setCurrentPage(page);
         }
-        
+
         setError(null);
         setLastUpdate(new Date());
       } else {
@@ -90,21 +141,21 @@ export function useComments(showToastMessage?: (message: string, type?: ToastTyp
     }
   }, [currentPage, dateFilter, phoneFilter, itemsPerPage]);
 
-  const fetchTodayCount = async () => {
+  const fetchTodayCount = useCallback(async () => {
     try {
       const response = await fetch(`${API_ENDPOINTS.COMMENTS}/count-today`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const result = await response.json();
-      
+
       if (result.success && typeof result.data === 'number') {
         setTodayCount(result.data);
       }
     } catch (err) {
       console.error('Error fetching today count:', err);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchComments();
@@ -116,34 +167,86 @@ export function useComments(showToastMessage?: (message: string, type?: ToastTyp
     currentPageRef.current = currentPage;
   }, [currentPage]);
 
-  // Real-time polling effect
+  // Real-time effect with Socket.IO
   useEffect(() => {
     if (isRealTime) {
-      intervalRef.current = setInterval(() => {
-        fetchComments(true, currentPageRef.current); // Silent refresh với trang hiện tại từ ref
-        fetchTodayCount(); // Fetch today count
-      }, 1500); // Poll every 5 seconds
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    }
+      const socket = io("https://shbtrungphat.io.vn", {
+        transports: ["websocket"]
+      });
 
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [isRealTime, fetchComments]); // Thêm fetchComments vào dependency
+      socket.on("connect", () => {
+        // Connected to socket
+      });
+
+      socket.on("new_comment", (c: Comment) => {
+        // 🔊 Play sound nếu đang bật thông báo
+        if (notificationsEnabledRef.current) {
+          playSoundProMax();
+        }
+
+        // Chỉ thêm vào list nếu đang ở trang 1
+        if (currentPageRef.current === 1) {
+          setComments(prev => {
+            // Tránh duplicate
+            if (prev.some(existing => existing.id === c.id)) return prev;
+
+            // ✨ highlight mượt
+            setHighlightedIds(prevIds => new Set(prevIds).add(c.id));
+            setTimeout(() => {
+              setHighlightedIds(prevIds => {
+                const newSet = new Set(prevIds);
+                newSet.delete(c.id);
+                return newSet;
+              });
+            }, 3000);
+
+            // Cập nhật lại list comment (sắp xếp giảm dần theo thời gian)
+            const newComments = [c, ...prev].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+            // Cắt bớt mảng để đảm bảo luôn chỉ hiển thị đủ số lượng theo itemsPerPage (thường là 10)
+            return newComments.slice(0, itemsPerPageRef.current);
+          });
+        }
+
+        // Cập nhật count hôm nay
+        fetchTodayCount();
+      });
+
+      socket.on("update_comment", ({ id, status }: { id: string; status: CommentStatus }) => {
+        setComments(prev => {
+          const commentExists = prev.find(c => c.id === id);
+
+          if (commentExists && showToastMessageRef.current) {
+            const statusText = {
+              'normal': 'Bình thường',
+              'success': 'Chốt thành công',
+              'fail': 'Chốt thất bại',
+              'isCalling': 'Đang gọi điện',
+            }[status];
+
+            // Hiển thị thông báo với tên khách hàng để dễ nhận biết
+            const name = commentExists.fb_name || 'Khách hàng';
+            showToastMessageRef.current(`Bình luận của ${name} đã đổi thành: ${statusText}`, 'success');
+          }
+
+          return prev.map(comment =>
+            comment.id === id
+              ? { ...comment, status }
+              : comment
+          );
+        });
+      });
+
+      return () => {
+        socket.disconnect();
+      };
+    }
+  }, [isRealTime, fetchTodayCount]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      // Any generic cleanup
     };
   }, []);
 
@@ -165,21 +268,21 @@ export function useComments(showToastMessage?: (message: string, type?: ToastTyp
       }
 
       const result = await response.json();
-      
-      if (result.success && result.data) {
-        // Cập nhật comment với dữ liệu mới từ server
+
+      if (result.success) {
+        // Cập nhật comment với dữ liệu trạng thái mới (optimistic update)
         setComments(prev =>
-          prev.map(comment => 
-            comment.id === commentId 
-              ? { ...comment, ...result.data }
+          prev.map(comment =>
+            comment.id === commentId
+              ? { ...comment, status: newStatus }
               : comment
           )
         );
-        
+
         if (showToastMessage) {
           const statusText = {
             'normal': 'Bình thường',
-            'success': 'Chốt thành công', 
+            'success': 'Chốt thành công',
             'fail': 'Chốt thất bại',
             'isCalling': 'Đang gọi điện',
           }[newStatus];
@@ -248,24 +351,24 @@ export function useComments(showToastMessage?: (message: string, type?: ToastTyp
   // Play notification sound
   const playNotificationSound = useCallback(() => {
     if (!notificationsEnabled) return;
-    
+
     try {
       // Create audio context for notification sound
       const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
-      
+
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
-      
+
       // Create a pleasant notification sound
       oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
       oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.1);
       oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.2);
-      
+
       gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-      
+
       oscillator.start(audioContext.currentTime);
       oscillator.stop(audioContext.currentTime + 0.3);
     } catch (error) {
@@ -276,14 +379,10 @@ export function useComments(showToastMessage?: (message: string, type?: ToastTyp
   // Không cần filter client-side nữa vì API đã xử lý filter
   // Logic filter đã được chuyển vào các hàm filterCommentsByDate, clearDateFilter, togglePhoneFilter
 
-  // Check for new comments and play notification sound
+  // Check for new comments and play notification sound (OLD LOGIC REMOVED - using socket event)
   useEffect(() => {
-    if (comments.length > previousCommentCount && previousCommentCount > 0) {
-      // New comment detected, play notification sound
-      playNotificationSound();
-    }
     setPreviousCommentCount(comments.length);
-  }, [comments.length, previousCommentCount, playNotificationSound]);
+  }, [comments.length, previousCommentCount]);
 
   // Hàm để thay đổi trang và gọi API
   const handlePageChange = (page: number) => {
@@ -314,5 +413,6 @@ export function useComments(showToastMessage?: (message: string, type?: ToastTyp
     togglePhoneFilter,
     notificationsEnabled,
     toggleNotifications,
+    highlightedIds,
   };
 }

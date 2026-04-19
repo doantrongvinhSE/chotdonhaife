@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Order } from '../../types/posts';
+import { Order, AddressDetail } from '../../types/posts';
 import {
   X, ShoppingCart, User, Truck, Package, Receipt,
   Trash2, Minus, Plus, Pencil, Lightbulb, ShieldCheck,
   MessageCircle, CheckCircle2, Edit3
 } from 'lucide-react';
-import AddressSelector, { AddressDetail } from '../ui/AddressSelector';
+import AddressSelector from '../ui/AddressSelector';
 
 interface ProductItem {
   id: string;

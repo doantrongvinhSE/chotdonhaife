@@ -42,10 +42,6 @@ export function PostForm({ onSubmit, onBulkClick, addingPost, addingBulk, bulkPr
     onSubmit({
       url: url.trim(),
       title: title.trim(),
-      isVisible: true,
-      commentCountToday: 0,
-      lastCommentAt: null,
-      status: 'Đang chạy',
     });
     setUrl('');
     setTitle('');

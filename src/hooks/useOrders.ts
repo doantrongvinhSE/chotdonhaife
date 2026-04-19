@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Order, OrdersResponse } from '../types/posts';
 import { API_ENDPOINTS } from '../config/api';
+import { ToastType } from '../components/ui/Toast';
 
-export function useOrders(showToastMessage?: (message: string) => void) {
+export function useOrders(showToastMessage?: (message: string, type?: ToastType) => void) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

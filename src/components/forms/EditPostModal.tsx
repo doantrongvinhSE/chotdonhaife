@@ -4,8 +4,8 @@ import { X, Edit3 } from 'lucide-react';
 interface EditPostModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (id: string, data: { name: string; link: string }) => Promise<void>;
-  post: { id: string; title: string; url: string } | null;
+  onSubmit: (id: number, data: { name: string; link: string }) => Promise<void>;
+  post: { id: number; title: string; url: string } | null;
 }
 
 export function EditPostModal({ isOpen, onClose, onSubmit, post }: EditPostModalProps) {

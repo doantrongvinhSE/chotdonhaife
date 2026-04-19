@@ -15,7 +15,7 @@ export const useAddress = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${API_BASE_URL}/p/`);
+      const response = await fetch(`${API_BASE_URL}/p`);
       if (!response.ok) {
         throw new Error('Không thể tải danh sách tỉnh/thành phố');
       }

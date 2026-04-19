@@ -3,15 +3,14 @@ import { RunningPost } from '../types/posts';
 
 export function useFilters(items: RunningPost[]) {
   const [searchTitle, setSearchTitle] = useState('');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
+
   const [sortBy, setSortBy] = useState<string>('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const filteredAndSortedItems = useMemo(() => {
     const filtered = items.filter((item) => {
       const matchesTitle = item.title.toLowerCase().includes(searchTitle.toLowerCase());
-      const matchesStatus = filterStatus === 'all' || item.status === filterStatus;
-      return matchesTitle && matchesStatus;
+      return matchesTitle;
     });
 
     if (sortBy) {
@@ -22,13 +21,10 @@ export function useFilters(items: RunningPost[]) {
             aVal = a.title.toLowerCase();
             bVal = b.title.toLowerCase();
             break;
-          case 'status':
-            aVal = a.status;
-            bVal = b.status;
-            break;
+
           case 'commentCount':
-            aVal = a.commentCountToday;
-            bVal = b.commentCountToday;
+            aVal = a.commentCountToday || 0;
+            bVal = b.commentCountToday || 0;
             break;
           case 'lastComment':
             aVal = a.lastCommentAt?.getTime() || 0;
@@ -43,7 +39,7 @@ export function useFilters(items: RunningPost[]) {
       });
     }
     return filtered;
-  }, [items, searchTitle, filterStatus, sortBy, sortOrder]);
+  }, [items, searchTitle, sortBy, sortOrder]);
 
   const handleSort = (column: string) => {
     if (sortBy === column) {
@@ -56,15 +52,12 @@ export function useFilters(items: RunningPost[]) {
 
   const clearFilters = () => {
     setSearchTitle('');
-    setFilterStatus('all');
     setSortBy('');
   };
 
   return {
     searchTitle,
     setSearchTitle,
-    filterStatus,
-    setFilterStatus,
     filteredAndSortedItems,
     handleSort,
     clearFilters,

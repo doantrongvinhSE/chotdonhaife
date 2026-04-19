@@ -1,5 +1,5 @@
 // API Configuration
-const API_BASE_URL = import.meta.env.DEV 
+const API_BASE_URL = import.meta.env.DEV
   ? '/api'  // Sử dụng proxy trong development
   : 'https://shbtrungphat.io.vn';  // Sử dụng trực tiếp trong production
 

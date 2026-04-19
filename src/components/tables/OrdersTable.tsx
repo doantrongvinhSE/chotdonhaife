@@ -124,15 +124,14 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
               <th className="px-4 py-4 w-12">
                 <button
                   onClick={() => onToggleSelectAll(!allSelected)}
-                  className={`w-[18px] h-[18px] rounded-[5px] flex items-center justify-center transition-all duration-200 cursor-pointer ${
-                    allSelected
-                      ? 'bg-[#007AFF] border-2 border-[#007AFF]'
-                      : 'bg-white border-2 border-slate-300 hover:border-[#007AFF]'
-                  }`}
+                  className={`w-[18px] h-[18px] rounded-[5px] flex items-center justify-center transition-all duration-200 cursor-pointer ${allSelected
+                    ? 'bg-[#007AFF] border-2 border-[#007AFF]'
+                    : 'bg-white border-2 border-slate-300 hover:border-[#007AFF]'
+                    }`}
                 >
                   {allSelected && (
                     <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                      <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   )}
                 </button>
@@ -140,6 +139,9 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
             )}
             <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
               Mã đơn
+            </th>
+            <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              NV
             </th>
             <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
               Khách hàng
@@ -190,23 +192,21 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
             return (
               <tr
                 key={order.id}
-                className={`border-b border-slate-50 hover:bg-slate-50/50 transition-colors ${
-                  selectedIds.includes(order.id) ? 'bg-blue-50' : ''
-                }`}
+                className={`border-b border-slate-50 hover:bg-slate-50/50 transition-colors ${selectedIds.includes(order.id) ? 'bg-blue-50' : ''
+                  }`}
               >
                 {onToggleSelectOne && (
                   <td className="px-4 py-4">
                     <button
                       onClick={() => onToggleSelectOne(order.id, !selectedIds.includes(order.id))}
-                      className={`w-[18px] h-[18px] rounded-[5px] flex items-center justify-center transition-all duration-200 cursor-pointer ${
-                        selectedIds.includes(order.id)
-                          ? 'bg-[#007AFF] border-2 border-[#007AFF]'
-                          : 'bg-white border-2 border-slate-300 hover:border-[#007AFF]'
-                      }`}
+                      className={`w-[18px] h-[18px] rounded-[5px] flex items-center justify-center transition-all duration-200 cursor-pointer ${selectedIds.includes(order.id)
+                        ? 'bg-[#007AFF] border-2 border-[#007AFF]'
+                        : 'bg-white border-2 border-slate-300 hover:border-[#007AFF]'
+                        }`}
                     >
                       {selectedIds.includes(order.id) && (
                         <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                          <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       )}
                     </button>
@@ -217,6 +217,13 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                 <td className="px-4 py-4">
                   <span className="text-sm font-semibold text-blue-500 cursor-pointer hover:text-blue-600">
                     {orderCode}
+                  </span>
+                </td>
+
+                {/* Nhân viên chốt đơn */}
+                <td className="px-4 py-4">
+                  <span className="text-sm font-semibold text-slate-600">
+                    {"Hoa"}
                   </span>
                 </td>
 

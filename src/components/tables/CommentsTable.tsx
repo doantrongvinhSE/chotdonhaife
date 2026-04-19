@@ -19,6 +19,7 @@ interface CommentsTableProps {
   onCreateOrder?: (comment: Comment) => void;
   compact?: boolean;
   onShowToast?: (message: string, type?: ToastType) => void;
+  highlightedIds?: Set<string>;
 }
 
 const CommentsTable: React.FC<CommentsTableProps> = ({
@@ -34,6 +35,7 @@ const CommentsTable: React.FC<CommentsTableProps> = ({
   onCreateOrder,
   compact = false,
   onShowToast,
+  highlightedIds,
 }) => {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [syncingPhone, setSyncingPhone] = useState<string | null>(null);
@@ -117,7 +119,7 @@ const CommentsTable: React.FC<CommentsTableProps> = ({
 
       const url = `https://phoneasync-default-rtdb.firebaseio.com/${selectedCallerKey}.json`;
       const response = await fetch(url, requestOptions);
-      
+
       if (response.ok) {
         if (onShowToast) {
           onShowToast(`Đã đồng bộ số điện thoại: ${firstPhone} cho ${callerName}`, 'success');
@@ -260,9 +262,10 @@ const CommentsTable: React.FC<CommentsTableProps> = ({
               {comments.map((comment) => {
                 const time = formatTimestamp(comment.timestamp);
                 const hasPhone = Boolean(comment.phone);
+                const isHighlighted = highlightedIds?.has(comment.id);
 
                 return (
-                  <tr key={comment.id} className="bg-white hover:bg-slate-50/70 transition-colors [&>td]:align-middle">
+                  <tr key={comment.id} className={`${isHighlighted ? 'bg-[#fff3cd]' : 'bg-white hover:bg-slate-50/70'} transition-colors duration-1000 ease-in-out [&>td]:align-middle`}>
                     <td className={`${tdPad} align-middle`}>
                       <div className="flex flex-col leading-tight">
                         <span className="text-sm font-semibold text-slate-800">{time.time}</span>
@@ -272,10 +275,10 @@ const CommentsTable: React.FC<CommentsTableProps> = ({
 
                     <td className={`${tdPad} align-middle`}>
                       <div className="space-y-1.5">
-                        <div className="truncate text-sm font-semibold text-slate-800" title={comment.post.name}>
-                          {abbreviate(comment.post.name, compact ? 22 : 28)}
+                        <div className="truncate text-sm font-semibold text-slate-800" title={comment.post?.name}>
+                          {abbreviate(comment.post?.name || 'Bài viết không xác định', compact ? 22 : 28)}
                         </div>
-                        {comment.post.link && (
+                        {comment.post?.link && (
                           <a
                             href={comment.post.link}
                             target="_blank"
@@ -356,34 +359,34 @@ const CommentsTable: React.FC<CommentsTableProps> = ({
                     <td className={`${tdPad} align-middle`}>
                       <div className="flex items-center min-h-[36px]">
                         <StatusDropdown
-                        currentStatus={comment.status}
-                        onStatusChange={async (status) => {
-                          if (updatingId) return;
-                          setUpdatingId(comment.id);
-                          try {
-                            onStatusChange(comment.id, status);
-                          } finally {
-                            setUpdatingId(null);
-                          }
-                        }}
-                        compact={compact}
-                        loading={updatingId === comment.id}
-                        disabled={updatingId !== null}
-                      />
+                          currentStatus={comment.status}
+                          onStatusChange={async (status) => {
+                            if (updatingId) return;
+                            setUpdatingId(comment.id);
+                            try {
+                              onStatusChange(comment.id, status);
+                            } finally {
+                              setUpdatingId(null);
+                            }
+                          }}
+                          compact={compact}
+                          loading={updatingId === comment.id}
+                          disabled={updatingId !== null}
+                        />
                       </div>
                     </td>
 
                     <td className={`${tdPad} align-middle text-center`}>
                       <div className="flex items-center justify-center min-h-[36px]">
                         {onCreateOrder && (
-                        <button
-                          onClick={() => onCreateOrder(comment)}
-                          className={`mx-auto inline-flex items-center gap-1.5 ${compact ? 'px-2.5 py-1.5 text-xs' : 'px-4 py-2 text-sm'} bg-[#2563ee] hover:bg-[#1d4ed8] text-white font-semibold rounded-[10px] transition-all duration-200 ease-out shadow-sm hover:-translate-y-0.5 hover:shadow-[0_10px_20px_-10px_rgba(37,99,238,0.75)] active:translate-y-0 active:scale-[0.98]`}
-                          title="Tạo đơn hàng từ comment này"
-                        >
-                          <ShoppingCart className={`${compact ? 'w-3 h-3' : 'w-4 h-4'}`} />
-                          <span>Tạo đơn</span>
-                        </button>
+                          <button
+                            onClick={() => onCreateOrder(comment)}
+                            className={`mx-auto inline-flex items-center gap-1.5 ${compact ? 'px-2.5 py-1.5 text-xs' : 'px-4 py-2 text-sm'} bg-[#2563ee] hover:bg-[#1d4ed8] text-white font-semibold rounded-[10px] transition-all duration-200 ease-out shadow-sm hover:-translate-y-0.5 hover:shadow-[0_10px_20px_-10px_rgba(37,99,238,0.75)] active:translate-y-0 active:scale-[0.98]`}
+                            title="Tạo đơn hàng từ comment này"
+                          >
+                            <ShoppingCart className={`${compact ? 'w-3 h-3' : 'w-4 h-4'}`} />
+                            <span>Tạo đơn</span>
+                          </button>
                         )}
                       </div>
                     </td>

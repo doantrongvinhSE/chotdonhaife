@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlarmClockCheck, MessageSquare, MessageSquareDashed, RefreshCw, Search, Zap } from 'lucide-react';
+import { AlarmClockCheck, MessageSquare, MessageSquareDashed, Search } from 'lucide-react';
 import { useComments } from '../hooks/useComments';
 import { useOrders } from '../hooks/useOrders';
 import CommentsTable from '../components/tables/CommentsTable';
@@ -43,6 +43,7 @@ const CommentsPage: React.FC = () => {
     togglePhoneFilter,
     notificationsEnabled,
     toggleNotifications,
+    highlightedIds,
   } = useComments(showToastMessage);
 
   const { addOrder, addingOrder } = useOrders(showToastMessage);
@@ -99,7 +100,7 @@ const CommentsPage: React.FC = () => {
               <p className="text-xs text-slate-500">
                 Quản lý và tương tác với khách hàng thông qua các phản hồi từ mạng xã hội
                 {isRealTime && (
-                  <span className="ml-2 text-blue-500">• Cập nhật lần cuối: {lastUpdate}</span>
+                  <span className="ml-2 text-emerald-500 animate-pulse">• Cập nhật lần cuối: {lastUpdate}</span>
                 )}
               </p>
             </div>
@@ -202,6 +203,7 @@ const CommentsPage: React.FC = () => {
         onCreateOrder={handleCreateOrder}
         compact={false}
         onShowToast={showToastMessage}
+        highlightedIds={highlightedIds}
       />
 
       <CreateOrderModal

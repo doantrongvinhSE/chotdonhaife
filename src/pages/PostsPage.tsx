@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { FileText, RefreshCw, Trash2, MessageSquare, X, Search } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { FileText, Trash2, MessageSquare, X, Search } from 'lucide-react';
 import { Comment, RunningPost, CommentStatus } from '../types/posts';
 import { usePosts } from '../hooks/usePosts';
 import { useOrders } from '../hooks/useOrders';
@@ -9,7 +9,6 @@ import { BulkAddModal } from '../components/forms/BulkAddModal';
 import { PostsTable } from '../components/tables/PostsTable';
 import { Toast, ToastType } from '../components/ui/Toast';
 import { Pagination } from '../components/ui/Pagination';
-import { AutoPollingIndicator } from '../components/ui/AutoPollingIndicator';
 import { ExportButton } from '../components/ui/ExportButton';
 import { EditPostModal } from '../components/forms/EditPostModal';
 import CreateOrderModal from '../components/forms/CreateOrderModal';
@@ -34,8 +33,6 @@ export default function PostsPage() {
     deletePost,
     deleteSelectedPosts,
     setCurrentPage,
-    isPolling,
-    lastPollTime,
   } = usePosts(showToastMessage);
 
   const {
@@ -114,7 +111,7 @@ export default function PostsPage() {
           link: '',
         },
       }))
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       setComments(mapped);
       setShowCommentsModal(true);
     } catch (e) {
@@ -145,10 +142,15 @@ export default function PostsPage() {
     customer_name: string;
     phone: string;
     address: string;
+    addressDetail?: import('../types/posts').AddressDetail;
     note: string;
+    price: number;
+    quality: number;
+    total_price: number;
   }) {
     try {
-      await addOrder(orderData);
+      const { addressDetail, ...orderPayload } = orderData;
+      await addOrder({ ...orderPayload, status: 'pending' as const });
       handleCloseCreateOrderModal();
     } catch {
       // lỗi đã xử lý trong hook useOrders
@@ -176,9 +178,9 @@ export default function PostsPage() {
       const result = await response.json();
 
       if (result.success && result.data) {
-        setComments(prevComments => 
-          prevComments.map(comment => 
-            comment.id === commentId 
+        setComments(prevComments =>
+          prevComments.map(comment =>
+            comment.id === commentId
               ? { ...comment, status: result.data.status }
               : comment
           )
@@ -195,10 +197,8 @@ export default function PostsPage() {
   async function handleBulkAdd(posts: Array<{ url: string; title: string }>) {
     const newPosts = posts.map(post => ({
       ...post,
-      isVisible: true,
       commentCountToday: 0,
       lastCommentAt: null,
-      status: 'Đang chạy' as const,
     }));
     await addBulkPosts(newPosts);
   }
@@ -208,7 +208,7 @@ export default function PostsPage() {
     setShowEditModal(true);
   }
 
-  async function handleUpdatePost(id: string, data: { name: string; link: string }) {
+  async function handleUpdatePost(id: number, data: { name: string; link: string }) {
     await updatePost(id, data);
     setShowEditModal(false);
     setEditingPost(null);
@@ -439,7 +439,7 @@ export default function PostsPage() {
           setEditingPost(null);
         }}
         onSubmit={handleUpdatePost}
-        post={editingPost}
+        post={editingPost as { id: number; title: string; url: string } | null}
       />
 
       <Toast

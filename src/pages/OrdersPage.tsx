@@ -6,9 +6,9 @@ import { Pagination } from '../components/ui/Pagination';
 import OrderForm from '../components/forms/OrderForm';
 import OrderFilters from '../components/filters/OrderFilters';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
-import { Toast } from '../components/ui/Toast';
+import { Toast, ToastType } from '../components/ui/Toast';
 import { ExportOrdersButton } from '../components/ui/ExportOrdersButton';
-import { Order, OrderStatus } from '../types/posts';
+import { Order } from '../types/posts';
 
 const OrdersPage: React.FC = () => {
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
@@ -16,10 +16,12 @@ const OrdersPage: React.FC = () => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showBulkConfirmDialog, setShowBulkConfirmDialog] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastType, setToastType] = useState<ToastType>('success');
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
-  const showToastMessage = (message: string) => {
+  const showToastMessage = (message: string, type?: ToastType) => {
     setToastMessage(message);
+    setToastType(type || 'success');
     setTimeout(() => setToastMessage(null), 3000);
   };
 
@@ -32,12 +34,10 @@ const OrdersPage: React.FC = () => {
     totalItems,
     itemsPerPage,
     searchTerm,
-    statusFilter,
     updatingOrder,
     deletingOrder: isDeletingOrder,
     setCurrentPage,
     setSearchTerm,
-    setStatusFilter,
     fetchOrders,
     updateOrder,
     deleteOrder,
@@ -91,10 +91,21 @@ const OrdersPage: React.FC = () => {
     }
   };
 
-  const handleSaveOrder = async (orderData: Omit<Order, 'id' | 'createdAt'>) => {
+  const handleSaveOrder = async (orderData: {
+    product_name: string;
+    customer_name: string;
+    phone: string;
+    address: string;
+    avatar_customer?: string;
+    note: string;
+    price: number;
+    quality: number;
+    total_price: number;
+    status?: string;
+  }) => {
     try {
       if (editingOrder) {
-        await updateOrder(editingOrder.id, orderData);
+        await updateOrder(editingOrder.id, orderData as Omit<Order, 'id' | 'createdAt'>);
         setEditingOrder(null);
       }
     } catch (error) {
@@ -156,7 +167,7 @@ const OrdersPage: React.FC = () => {
           </div>
         </div>
         <button
-          onClick={() => {}}
+          onClick={() => { }}
           className="flex items-center gap-2 px-5 py-2.5 text-white text-sm font-semibold rounded-xl mt-4 sm:mt-0 transition-all duration-200"
           style={{
             background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
@@ -237,9 +248,7 @@ const OrdersPage: React.FC = () => {
       {/* Filters */}
       <OrderFilters
         searchTerm={searchTerm}
-        statusFilter={statusFilter}
         onSearchChange={setSearchTerm}
-        onStatusChange={setStatusFilter}
         onClearFilters={clearFilters}
       >
         <div className="flex items-center gap-2">
@@ -361,6 +370,7 @@ const OrdersPage: React.FC = () => {
           message={toastMessage}
           isVisible={!!toastMessage}
           onClose={() => setToastMessage(null)}
+          type={toastType}
         />
       )}
     </div>

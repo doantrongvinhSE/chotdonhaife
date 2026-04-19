@@ -231,20 +231,20 @@ export function usePosts(showToastMessage?: (message: string, type?: ToastType) 
     setBulkProgress({ current: 0, total: 0 });
   };
 
-  
+
 
   const toggleSelectAll = (selectAll: boolean) => {
     setItems(prev => prev.map(item => ({ ...item, selected: selectAll })));
   };
 
-  const toggleSelectOne = (id: string) => {
+  const toggleSelectOne = (id: number) => {
     setItems(prev => prev.map(item =>
       item.id === id ? { ...item, selected: !item.selected } : item
     ));
   };
 
 
-  const deletePost = async (id: string) => {
+  const deletePost = async (id: number) => {
     try {
       const response = await fetch(`${API_ENDPOINTS.POSTS}/${id}`, {
         method: 'DELETE',
@@ -272,7 +272,7 @@ export function usePosts(showToastMessage?: (message: string, type?: ToastType) 
     }
   };
 
-  const updatePost = async (id: string, data: { name: string; link: string }) => {
+  const updatePost = async (id: number, data: { name: string; link: string }) => {
     try {
       const response = await fetch(`${API_ENDPOINTS.POSTS}/${id}`, {
         method: 'PUT',

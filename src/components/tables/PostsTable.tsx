@@ -1,4 +1,3 @@
-import React from 'react';
 import { Trash2, Edit, ArrowUp, ArrowUpDown, ExternalLink } from 'lucide-react';
 import { RunningPost } from '../../types/posts';
 import { formatRelativeTime, formatDateTime } from '../../utils/posts';
@@ -7,9 +6,9 @@ type PostsTableProps = {
   items: RunningPost[];
   selectAll: boolean;
   onToggleSelectAll: () => void;
-  onToggleSelectOne: (id: string) => void;
-  onToggleItemVisibility?: (id: string) => void;
-  onDeletePost: (id: string) => void;
+  onToggleSelectOne: (id: number) => void;
+  onToggleItemVisibility?: (id: number) => void;
+  onDeletePost: (id: number) => void;
   onEditPost: (post: RunningPost) => void;
   onSort: (column: string) => void;
   onClickTodayComments?: (post: RunningPost) => void;
@@ -47,15 +46,14 @@ export function PostsTable({
             <th className="px-4 py-4 w-12">
               <button
                 onClick={onToggleSelectAll}
-                className={`w-[18px] h-[18px] rounded-[5px] flex items-center justify-center transition-all duration-200 cursor-pointer ${
-                  selectAll
-                    ? 'bg-[#007AFF] border-2 border-[#007AFF]'
-                    : 'bg-white border-2 border-slate-300 hover:border-[#007AFF]'
-                }`}
+                className={`w-[18px] h-[18px] rounded-[5px] flex items-center justify-center transition-all duration-200 cursor-pointer ${selectAll
+                  ? 'bg-[#007AFF] border-2 border-[#007AFF]'
+                  : 'bg-white border-2 border-slate-300 hover:border-[#007AFF]'
+                  }`}
               >
                 {selectAll && (
                   <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                    <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 )}
               </button>
@@ -92,16 +90,15 @@ export function PostsTable({
               {/* Checkbox */}
               <td className="px-4 py-4">
                 <button
-                  onClick={() => onToggleSelectOne(item.id)}
-                  className={`w-[18px] h-[18px] rounded-[5px] flex items-center justify-center transition-all duration-200 cursor-pointer ${
-                    item.selected
-                      ? 'bg-[#007AFF] border-2 border-[#007AFF]'
-                      : 'bg-white border-2 border-slate-300 hover:border-[#007AFF]'
-                  }`}
+                  onClick={() => item.id !== undefined && onToggleSelectOne(item.id)}
+                  className={`w-[18px] h-[18px] rounded-[5px] flex items-center justify-center transition-all duration-200 cursor-pointer ${item.selected
+                    ? 'bg-[#007AFF] border-2 border-[#007AFF]'
+                    : 'bg-white border-2 border-slate-300 hover:border-[#007AFF]'
+                    }`}
                 >
                   {item.selected && (
                     <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                      <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   )}
                 </button>
@@ -197,7 +194,7 @@ export function PostsTable({
                     <Edit className="w-[15px] h-[15px]" style={{ color: '#007AFF' }} strokeWidth={2.2} />
                   </button>
                   <button
-                    onClick={() => onDeletePost(item.id)}
+                    onClick={() => item.id !== undefined && onDeletePost(item.id)}
                     className="p-2 rounded-lg transition-all active:scale-90"
                     style={{ background: 'rgba(255, 59, 48, 0.08)' }}
                     title="Xóa bài viết"
