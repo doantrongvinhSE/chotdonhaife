@@ -54,7 +54,7 @@ export function useComments(showToastMessage?: (message: string, type?: ToastTyp
     return saved ? JSON.parse(saved) : false;
   });
   const [previousCommentCount, setPreviousCommentCount] = useState<number>(0);
-  const [itemsPerPage, setItemsPerPage] = useState<number>(10);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(20);
   const [highlightedIds, setHighlightedIds] = useState<Set<string>>(new Set());
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const currentPageRef = useRef<number>(currentPage);
