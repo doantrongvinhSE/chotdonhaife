@@ -151,6 +151,11 @@ export default function PostsPage() {
     try {
       const { addressDetail, ...orderPayload } = orderData;
       await addOrder({ ...orderPayload, status: 'pending' as const });
+
+      if (selectedComment?.id) {
+        await handleCommentStatusChange(selectedComment.id, 'success');
+      }
+
       handleCloseCreateOrderModal();
     } catch {
       // lỗi đã xử lý trong hook useOrders

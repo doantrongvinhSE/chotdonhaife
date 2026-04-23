@@ -79,6 +79,11 @@ const CommentsPage: React.FC = () => {
         avatar_customer: selectedComment?.avatar_user || undefined,
         status: 'pending',
       });
+
+      if (selectedComment?.id) {
+        await updateCommentStatus(selectedComment.id, 'success');
+      }
+
       handleCloseCreateOrderModal();
     } catch {
       // Error handling được thực hiện trong useOrders hook
